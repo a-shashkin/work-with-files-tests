@@ -1,29 +1,33 @@
 package com.simbirsoft.files.tests;
 
+import net.lingala.zip4j.io.inputstream.ZipInputStream;
+import net.lingala.zip4j.model.LocalFileHeader;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TxtFileTest {
+public class ZipWithPasswordFileTest {
 
     @Test
-    void checkTxtFile() throws Exception {
+    void checkZipWithPasswordFile() throws Exception {
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        InputStream stream = classLoader.getResourceAsStream("X41822N.txt");
-        InputStreamReader streamReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-        BufferedReader reader = new BufferedReader(streamReader);
-
-        String line;
         List<String> txtLines = new ArrayList<>();
-        while ((line = reader.readLine()) != null) {
-            txtLines.add(line);
+        String line;
+        InputStream stream = classLoader.getResourceAsStream("zip/zip_with_password_sample.zip");
+        try (ZipInputStream zipInputStream = new ZipInputStream(stream, "IHaveAPassword".toCharArray())){
+            LocalFileHeader localFileHeader;
+            InputStreamReader streamReader = new InputStreamReader(zipInputStream, StandardCharsets.UTF_8);
+            BufferedReader reader = new BufferedReader(streamReader);
+            while ((localFileHeader = zipInputStream.getNextEntry()) != null) {
+                while ((line = reader.readLine()) != null) {
+                    txtLines.add(line);
+                }
+            }
         }
 
         Assertions.assertTrue(txtLines.contains("Serial number: X41822N"));
